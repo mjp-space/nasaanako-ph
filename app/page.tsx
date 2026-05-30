@@ -10,6 +10,7 @@ export default function Home() {
   const [profile, setProfile] = useState<any>(null)
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [playerCount, setPlayerCount] = useState<number | null>(null)
+  const [visitorCount, setVisitorCount] = useState<number | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -21,6 +22,16 @@ export default function Home() {
     })
     getLeaderboard().then(data => setLeaderboard(data.filter((p: any) => (p.total_score || 0) > 0)))
     supabase.from('profiles').select('*', { count: 'exact', head: true }).then(({ count }) => setPlayerCount(count))
+
+    // Track unique visitor via localStorage fingerprint
+    let vid = localStorage.getItem('nasaanako_vid')
+    if (!vid) {
+      vid = Math.random().toString(36).slice(2) + Date.now().toString(36)
+      localStorage.setItem('nasaanako_vid', vid)
+    }
+    supabase.from('visitors').upsert({ id: vid, last_seen: new Date().toISOString() }, { onConflict: 'id' }).then(() => {
+      supabase.from('visitors').select('*', { count: 'exact', head: true }).then(({ count }) => setVisitorCount(count))
+    })
   }, [])
 
   const MOCK_LB = [
@@ -91,7 +102,7 @@ export default function Home() {
         </div>
 
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: 48, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
-          {[['500+', 'PH Locations'], ['81', 'Provinces'], ['Free', 'Always'], [playerCount !== null ? playerCount.toLocaleString() : '—', 'Players']].map(([val, label]) => (
+          {[['500+', 'PH Locations'], ['81', 'Provinces'], ['Free', 'Always'], [visitorCount !== null ? visitorCount.toLocaleString() : '—', 'Visitors']].map(([val, label]) => (
             <div key={label} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--accent)' }}>{val}</div>
               <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 1, color: 'var(--muted)' }}>{label}</div>

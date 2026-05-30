@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     siteName: "NasaanAko.ph",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og",
         width: 1200,
         height: 630,
         alt: "NasaanAko.ph — Philippines Geography Game",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "NasaanAko.ph — Find Yourself in the Philippines 🇵🇭",
     description: "Drop anywhere in the Philippines and guess where you are. Libre at walang download!",
-    images: ["/og-image.png"],
+    images: ["/og"],
   },
 };
 
