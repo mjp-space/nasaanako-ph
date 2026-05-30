@@ -150,6 +150,7 @@ export default function PlayPage() {
         mapTypeId: 'roadmap',
         disableDefaultUI: true,
         zoomControl: true,
+        gestureHandling: 'greedy',
         restriction: {
           latLngBounds: phBounds,
           strictBounds: false,
