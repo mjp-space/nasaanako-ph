@@ -47,6 +47,7 @@ export default function PlayPage() {
   const bgMusicRef     = useRef<HTMLAudioElement | null>(null)
 
   const [mapsLoaded, setMapsLoaded]     = useState(false)
+  const [svLoading, setSvLoading]       = useState(true)
   const [round, setRound]               = useState(0)
   const [totalScore, setTotalScore]     = useState(0)
   const [isFreePlay, setIsFreePlay]     = useState(false)
@@ -136,6 +137,7 @@ export default function PlayPage() {
     if (!mapsLoaded || !guessMapRef.current || guessMapObjRef.current) return
     // Small delay so the flex container has painted and has real dimensions
     const t = setTimeout(() => {
+
       if (!guessMapRef.current || guessMapObjRef.current) return
       const map = new window.google.maps.Map(guessMapRef.current, {
         center: { lat: 12.5, lng: 122.5 },
@@ -159,7 +161,7 @@ export default function PlayPage() {
       setGuessPlaced(true)
       playFX('pin')
     })
-    }, 80)
+    }, 300)
     return () => clearTimeout(t)
   }, [mapsLoaded])
 
@@ -191,6 +193,7 @@ export default function PlayPage() {
       const sv = new window.google.maps.StreetViewService()
       sv.getPanorama({ location: { lat: loc.lat, lng: loc.lng }, radius: 1000 }, (data: any, status: any) => {
         if (status === 'OK') {
+          setSvLoading(true)
           svPanoRef.current = new window.google.maps.StreetViewPanorama(streetViewRef.current!, {
             position: { lat: loc.lat, lng: loc.lng },
             pov: { heading: Math.random() * 360, pitch: 0 },
@@ -201,6 +204,18 @@ export default function PlayPage() {
             motionTracking: false,
             motionTrackingControl: false,
           })
+          svPanoRef.current.addListener('status_changed', () => {
+            if (svPanoRef.current?.getStatus() === 'OK') setSvLoading(false)
+          })
+          // Fallback: if Street View doesn't load in 8s, skip to next location
+          const svTimeout = setTimeout(() => {
+            if (svPanoRef.current?.getStatus() !== 'OK') {
+              const next = LOCATIONS.filter(l => ![...usedLocs, loc].includes(l))[
+                Math.floor(Math.random() * LOCATIONS.filter(l => ![...usedLocs, loc].includes(l)).length)
+              ]
+              if (next) startRound(currentRound, [...usedLocs, loc])
+            }
+          }, 8000)
         } else {
           // No Street View coverage — silently skip to a new location
           const nextLoc = LOCATIONS.filter(l => ![...usedLocs, loc].includes(l))[
@@ -449,6 +464,15 @@ export default function PlayPage() {
 
         {/* Street View */}
         <div ref={streetViewRef} style={{ width: '100%', height: '100%', pointerEvents: timeLocked ? 'none' : 'auto' }} />
+
+        {/* Loading overlay */}
+        {svLoading && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 49, background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <div style={{ fontSize: '2.5rem', animation: 'spin 1.2s linear infinite' }}>🌏</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 600 }}>Dropping you in…</div>
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
 
         {/* Timer */}
         <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 50, background: 'rgba(15,17,23,0.88)', border: `1px solid ${timeColor}`, borderRadius: 12, padding: '8px 14px', minWidth: 68, textAlign: 'center', backdropFilter: 'blur(8px)' }}>
