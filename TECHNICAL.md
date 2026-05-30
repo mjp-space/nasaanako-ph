@@ -1,6 +1,6 @@
 # NasaanAko.ph — Technical Documentation
 
-> Last updated: May 2026  
+> Last updated: May 30, 2026  
 > Maintainer: Mark Jude Presnilla (markjudepresnilla@gmail.com)
 
 ---
@@ -386,9 +386,60 @@ Set in Vercel → Project → Settings → Environment Variables:
 
 | Issue | Status | Notes |
 |-------|--------|-------|
-| Street View gaps | Mitigated | 1km radius fallback skips bad coordinates silently |
+| Street View gaps | Mitigated | 1km radius fallback + 8s timeout auto-skip for truly bad locations |
 | ~302 locations | Acceptable | Expands automatically — add to `locations.js` |
 | No email auth | By design | Username-only UX — usernames stored as `@nasaanako.ph` emails |
 | No daily challenge enforcement | Intentional | `getDailyLocations()` exists but not activated — all rounds are random |
 | No duplicate round prevention across sessions | Low priority | Same location can appear in different game sessions |
 | Single Supabase project (no staging) | Low priority | Test schema changes carefully before running in SQL Editor |
+
+---
+
+## Session Log — May 30, 2026
+
+Full build session from prototype to live production. Summary of everything done:
+
+### What Was Built
+- Converted static HTML prototype → full Next.js 16 app with TypeScript + Tailwind
+- Pages: `/` (landing), `/modes` (game mode picker), `/play` (game), `/auth` (sign up/login)
+- Supabase auth, profiles, games tables, leaderboard view — all wired up
+- Google Maps JavaScript API + Street View — script injection with double-load guard
+- 302 PH locations across all regions in `lib/locations.js`
+- Scoring: Haversine distance, 0–5000 pts per round, tier system
+- Sound effects: background music, pin drop, good/bad/perfect score, round start
+
+### Key Fixes Applied
+- **RefererNotAllowedMapError** — added `localhost:3000` to Google Cloud API key allowlist
+- **Maps double-load** — guard checks `document.querySelector('script[src*="maps.googleapis.com"]')` before injecting
+- **Blank/black map on mobile** — 300ms init delay + `resize` event trigger after map container paints
+- **Street View black screen** — `StreetViewService.getPanorama()` pre-checks coverage within 1km; added loading spinner + 8s timeout auto-skip fallback
+- **Score resets to 0 on sign-in** — header now shows profile `total_score` from Supabase, not session score
+- **Leaderboard showing 0-score players** — filtered out with `.gt('total_score', 0)`
+- **`useSearchParams` build error** — wrapped in `<Suspense>` in `auth/page.tsx`
+- **Vercel 404 after deploy** — Framework Preset was blank ("Other"), fixed to Next.js
+
+### Current State (as of end of session)
+- ✅ Live at `nasaanako.ph` (www.nasaanako.ph)
+- ✅ Vercel auto-deploys on `git push` to `main`
+- ✅ Supabase: profiles + games + leaderboard view with RLS
+- ✅ Auth: sign up, log in, guest play, inline auth on final screen
+- ✅ Leaderboard: homepage top 10 + in-game widget top 3 + scrolling ticker
+- ✅ Mobile: responsive layout for iPhone 14+, `100dvh` for Safari
+- ✅ 302 locations across all PH regions
+- ✅ Street View loading spinner + 8s timeout auto-skip
+
+### Pending / Next Session
+- [ ] Test Street View black screen fix on mobile with real users
+- [ ] Expand locations beyond 302 (verify Street View coverage)
+- [ ] Activate Daily Challenge mode (code ready in `getDailyLocations()`)
+- [ ] Add more game modes (Pamana, Kalikasan, Sikat — currently "Coming Soon")
+- [ ] Add `og:image` and meta tags for social sharing
+- [ ] Consider upgrading `google.maps.Marker` → `AdvancedMarkerElement` (deprecated warning)
+- [ ] Add email-based auth option (currently username-only)
+- [ ] Monitor Supabase usage and Vercel bandwidth as player base grows
+
+### How to Resume Development
+1. Open terminal → `cd ~/Documents/Claude/Projects/nasaanako-nextjs`
+2. Run `npm run dev` → open `localhost:3000`
+3. Make changes → `git add . && git commit -m "..." && git push`
+4. Vercel auto-deploys in ~2 minutes

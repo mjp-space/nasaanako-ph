@@ -37,29 +37,29 @@ export default function Home() {
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Segoe UI, system-ui, sans-serif' }}>
 
       {/* NAV */}
-      <nav style={{ position: 'sticky', top: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', height: 56, background: 'rgba(15,17,23,0.95)', borderBottom: '1px solid var(--border)', backdropFilter: 'blur(10px)', zIndex: 200 }}>
-        <div style={{ fontSize: '1.25rem', fontWeight: 900, letterSpacing: '-0.5px' }}>
+      <nav style={{ position: 'sticky', top: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: 56, background: 'rgba(15,17,23,0.95)', borderBottom: '1px solid var(--border)', backdropFilter: 'blur(10px)', zIndex: 200 }}>
+        <div style={{ fontSize: '1.1rem', fontWeight: 900, letterSpacing: '-0.5px', flexShrink: 0 }}>
           Nasaan<span style={{ color: 'var(--accent)' }}>Ako</span>.ph
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
           {user ? (
             <>
-              <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--muted)', display: 'none' } as any} className="hide-mobile">
                 Hi, <strong style={{ color: 'var(--accent)' }}>{profile?.display_name || 'Player'}</strong>
               </span>
-              <button onClick={() => router.push('/modes')} style={{ background: 'var(--accent)', color: '#0f1117', border: 'none', padding: '8px 20px', borderRadius: 24, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={() => router.push('/modes')} style={{ background: 'var(--accent)', color: '#0f1117', border: 'none', padding: '8px 16px', borderRadius: 24, fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
                 ▶ Play
               </button>
-              <button onClick={async () => { await supabase.auth.signOut(); setUser(null); setProfile(null) }} style={{ background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', padding: '8px 16px', borderRadius: 24, fontWeight: 600, cursor: 'pointer', fontSize: '0.82rem' }}>
+              <button onClick={async () => { await supabase.auth.signOut(); setUser(null); setProfile(null) }} style={{ background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', padding: '8px 12px', borderRadius: 24, fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                 Sign Out
               </button>
             </>
           ) : (
             <>
-              <button onClick={() => router.push('/auth')} style={{ background: 'transparent', color: 'var(--text)', border: '1px solid var(--border)', padding: '8px 20px', borderRadius: 24, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={() => router.push('/auth')} style={{ background: 'transparent', color: 'var(--text)', border: '1px solid var(--border)', padding: '8px 14px', borderRadius: 24, fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
                 Log In
               </button>
-              <button onClick={() => router.push('/auth?tab=signup')} style={{ background: 'var(--accent)', color: '#0f1117', border: 'none', padding: '8px 20px', borderRadius: 24, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={() => router.push('/auth?tab=signup')} style={{ background: 'var(--accent)', color: '#0f1117', border: 'none', padding: '8px 14px', borderRadius: 24, fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
                 Sign Up
               </button>
             </>
