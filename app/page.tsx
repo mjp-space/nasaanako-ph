@@ -153,10 +153,7 @@ export default function Home() {
                 <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{p.display_name}</div>
                 <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{p.tier}</div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 800, color: 'var(--accent2)' }}>{p.total_score?.toLocaleString()}</div>
-                <div style={{ fontSize: '0.62rem', color: 'var(--muted)' }}>{p.games_played || 0} {(p.games_played || 0) === 1 ? 'game' : 'games'}</div>
-              </div>
+              <div style={{ fontWeight: 800, color: 'var(--accent2)' }}>{p.total_score?.toLocaleString()}</div>
             </div>
           ))}
           {leaderboard.length === 0 && (
