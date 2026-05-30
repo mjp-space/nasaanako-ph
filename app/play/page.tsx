@@ -290,10 +290,23 @@ export default function PlayPage() {
     else if (pts >= 2000)  playFX('good')
     else                   playFX('bad')
 
-    setTotalScore(prev => prev + pts)
-    setRoundDistances(prev => [...prev, dist])
+    const newTotal = totalScore + pts
+    const newDistances = [...roundDistances, dist]
+    setTotalScore(newTotal)
+    setRoundDistances(newDistances)
     setRoundResult({ pts, dist, outside, label, guessLat: lat, guessLng: lng, actualLat: currentLoc.lat, actualLng: currentLoc.lng, name: currentLoc.name, hint: currentLoc.hint })
     setPhase('result')
+
+    // Save progress after every round so partial games are recorded
+    if (user) {
+      const avgDist = newDistances.reduce((a, b) => a + b, 0) / newDistances.length
+      const accuracy = Math.round(Math.max(0, (1 - avgDist / 400)) * 100)
+      saveGame(user.id, { totalScore: newTotal, roundsPlayed: round + 1, accuracy, avgDistanceKm: avgDist, mode: isFreePlay ? 'freeplay' : 'daily' })
+        .then(async () => {
+          const { data: updated } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+          setProfile(updated)
+        }).catch(() => {})
+    }
 
     // Geocode actual location
     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${currentLoc.lat}&lon=${currentLoc.lng}&format=json&addressdetails=1`, { headers: { 'User-Agent': 'NasaanAkoPH/1.0', 'Accept-Language': 'en' } })
@@ -333,11 +346,9 @@ export default function PlayPage() {
 
   async function showFinal() {
     setPhase('final')
+    // Score already saved per round — just refresh profile for display
     if (user) {
-      const avgDist = roundDistances.reduce((a, b) => a + b, 0) / roundDistances.length
-      const accuracy = Math.round(Math.max(0, (1 - avgDist / 400)) * 100)
       try {
-        await saveGame(user.id, { totalScore, roundsPlayed: round + 1, accuracy, avgDistanceKm: avgDist, mode: isFreePlay ? 'freeplay' : 'daily' })
         const { data: updated } = await supabase.from('profiles').select('*').eq('id', user.id).single()
         setProfile(updated)
       } catch {}
