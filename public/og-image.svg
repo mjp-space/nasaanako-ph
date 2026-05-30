@@ -1,0 +1,13 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0f1117"/>
+  <radialGradient id="glow" cx="50%" cy="45%" r="50%">
+    <stop offset="0%" stop-color="#f5c542" stop-opacity="0.15"/>
+    <stop offset="100%" stop-color="#0f1117" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <text x="600" y="240" font-family="Arial Black, sans-serif" font-size="96" font-weight="900" text-anchor="middle" fill="white" letter-spacing="-3">Nasaan<tspan fill="#f5c542">Ako</tspan>.ph</text>
+  <text x="600" y="320" font-family="Arial, sans-serif" font-size="32" text-anchor="middle" fill="#9ca3af">Drop anywhere in the Philippines. Guess where you are.</text>
+  <text x="600" y="390" font-family="Arial, sans-serif" font-size="28" text-anchor="middle" fill="#6b7280">🇵🇭 Philippines Only · Free to Play · Walang Download</text>
+  <rect x="450" y="440" width="300" height="60" rx="30" fill="#f5c542"/>
+  <text x="600" y="479" font-family="Arial Black, sans-serif" font-size="24" font-weight="900" text-anchor="middle" fill="#0f1117">▶ Play Now — It's Free</text>
+</svg>

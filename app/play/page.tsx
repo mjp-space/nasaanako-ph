@@ -45,6 +45,7 @@ export default function PlayPage() {
   const guessMarkerRef = useRef<any>(null)
   const timerRef       = useRef<NodeJS.Timeout | null>(null)
   const bgMusicRef     = useRef<HTMLAudioElement | null>(null)
+  const nextLocRef     = useRef<any>(null)
 
   const [mapsLoaded, setMapsLoaded]     = useState(false)
   const [svLoading, setSvLoading]       = useState(true)
@@ -99,6 +100,7 @@ export default function PlayPage() {
     // Load top 3 for in-game leaderboard widget (only players with a real score)
     supabase.from('leaderboard').select('*').order('rank', { ascending: true }).gt('total_score', 0).limit(3)
       .then(({ data }) => { if (data && data.length > 0) setLbData(data) })
+
 
     return () => {
       bgMusicRef.current?.pause()
@@ -177,6 +179,16 @@ export default function PlayPage() {
     return () => clearTimeout(t)
   }, [mapsLoaded])
 
+  function refreshLb() {
+    supabase.from('leaderboard').select('*').order('rank', { ascending: true }).gt('total_score', 0).limit(3)
+      .then(({ data }) => { if (data && data.length > 0) setLbData(data) })
+  }
+
+  // Preload first location as soon as Maps API is ready
+  useEffect(() => {
+    if (mapsLoaded) preloadNextLocation([])
+  }, [mapsLoaded])
+
   // Resize guess map when ticker appears/disappears
   useEffect(() => {
     if (guessMapObjRef.current && window.google?.maps) {
@@ -195,8 +207,12 @@ export default function PlayPage() {
     setTimeLocked(false)
     if (guessMarkerRef.current) { guessMarkerRef.current.setMap(null); guessMarkerRef.current = null }
 
+    // Use preloaded location if available, otherwise pick random
     const available = LOCATIONS.filter(l => !usedLocs.includes(l))
-    const loc = available[Math.floor(Math.random() * available.length)]
+    const loc = (nextLocRef.current && !usedLocs.includes(nextLocRef.current))
+      ? nextLocRef.current
+      : available[Math.floor(Math.random() * available.length)]
+    nextLocRef.current = null
     setCurrentLoc(loc)
     setRoundLocations(prev => [...prev, loc])
 
@@ -296,6 +312,10 @@ export default function PlayPage() {
     setRoundDistances(newDistances)
     setRoundResult({ pts, dist, outside, label, guessLat: lat, guessLng: lng, actualLat: currentLoc.lat, actualLng: currentLoc.lng, name: currentLoc.name, hint: currentLoc.hint })
     setPhase('result')
+    setTimeLeft(0)
+
+    // Preload next location while player reads their result
+    preloadNextLocation([...roundLocations, currentLoc])
 
     // Save progress after every round so partial games are recorded
     if (user) {
@@ -305,6 +325,7 @@ export default function PlayPage() {
         .then(async () => {
           const { data: updated } = await supabase.from('profiles').select('*').eq('id', user.id).single()
           setProfile(updated)
+          refreshLb()
         }).catch(() => {})
     }
 
@@ -333,6 +354,21 @@ export default function PlayPage() {
       bounds.extend(actual); bounds.extend(guess)
       map.fitBounds(bounds, 40)
     }, 100)
+  }
+
+  function preloadNextLocation(usedLocs: any[]) {
+    if (!window.google?.maps) return
+    const available = LOCATIONS.filter(l => !usedLocs.includes(l))
+    const candidates = [...available].sort(() => Math.random() - 0.5).slice(0, 2)
+    const sv = new window.google.maps.StreetViewService()
+    const tryNext = (i: number) => {
+      if (i >= candidates.length) return
+      sv.getPanorama({ location: { lat: candidates[i].lat, lng: candidates[i].lng }, radius: 1000 }, (data: any, status: any) => {
+        if (status === 'OK') nextLocRef.current = candidates[i]
+        else tryNext(i + 1)
+      })
+    }
+    tryNext(0)
   }
 
   function nextRound() {
@@ -472,8 +508,8 @@ export default function PlayPage() {
             ))}
           </div>
           <div className="header-stat">
-            <div className="header-stat-label">{profile ? 'Total' : 'Score'}</div>
-            <div className="header-stat-value">{profile ? (profile.total_score || 0).toLocaleString() : totalScore.toLocaleString()}</div>
+            <div className="header-stat-label">{profile ? 'Total' : 'Guest'}</div>
+            <div className="header-stat-value">{profile ? (profile.total_score || 0).toLocaleString() : '—'}</div>
           </div>
           <button className="header-btn" onClick={() => router.push('/modes')} title="Back">🏠</button>
           <button className="header-btn" onClick={() => { setMuted(!muted); if (bgMusicRef.current) bgMusicRef.current.muted = !muted }}>
