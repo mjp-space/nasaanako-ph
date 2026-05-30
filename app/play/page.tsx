@@ -54,7 +54,7 @@ export default function PlayPage() {
   const [isFreePlay, setIsFreePlay]     = useState(false)
   const [roundLocations, setRoundLocations] = useState<any[]>([])
   const [currentLoc, setCurrentLoc]     = useState<any>(null)
-  const [lbVisible, setLbVisible]       = useState(true)
+  const [lbVisible, setLbVisible]       = useState(false)
   const [lbData, setLbData]             = useState<any[]>([])
   const [isDaily, setIsDaily]           = useState(true)
   const dailyLocs                       = useRef<any[]>(getDailyLocations(5))
@@ -610,7 +610,7 @@ export default function PlayPage() {
         </div>}
 
         {/* Leaderboard widget */}
-        {lbVisible && lbData.length > 0 && phase === 'playing' && (
+        {!svLoading && lbVisible && lbData.length > 0 && phase === 'playing' && (
           <div className="lb-widget">
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
               <span style={{ fontSize:'0.65rem', textTransform:'uppercase', letterSpacing:2, color:'var(--muted)', fontWeight:700 }}>🏆 Top 1–3</span>
@@ -645,9 +645,11 @@ export default function PlayPage() {
         )}
 
         {/* Map label */}
+        {!svLoading && (
         <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.7)', color: 'var(--text)', fontSize: '0.65rem', padding: '3px 10px', borderRadius: 20, pointerEvents: 'none', zIndex: 51, whiteSpace: 'nowrap' }}>
           {guessPlaced ? '✅ Pin placed — tap submit!' : '👆 Tap the map to drop your pin'}
         </div>
+        )}
 
         {/* Minimap + optional ticker strip */}
         <div className="minimap-h" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderTop: '2px solid var(--border)', zIndex: 50, display:'flex', flexDirection:'column' }}>
@@ -669,14 +671,14 @@ export default function PlayPage() {
         </div>
 
         {/* Guess button */}
-        <button
+        {!svLoading && <button
           className="guess-btn-bottom"
           onClick={guessPlaced ? submitGuess : undefined}
           disabled={!guessPlaced}
           style={{ position: 'absolute', left: 12, right: 12, padding: '13px 20px', background: 'var(--accent)', color: '#0f1117', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: '1rem', cursor: guessPlaced ? 'pointer' : 'not-allowed', opacity: guessPlaced ? 1 : 0.45, zIndex: 60, boxShadow: '0 4px 20px rgba(245,197,66,0.4)', fontFamily: 'inherit' }}
         >
           📍 Drop Pin & Guess
-        </button>
+        </button>}
 
         {/* RESULT OVERLAY */}
         {phase === 'result' && roundResult && (
