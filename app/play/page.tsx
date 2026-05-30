@@ -5,6 +5,14 @@ import { useRouter } from 'next/navigation'
 import { supabase, saveGame, getProfile, getTier, signUp, signIn } from '../../lib/supabase'
 import { LOCATIONS, getDailyLocations } from '../../lib/locations'
 
+const PH_ANIMALS = ['Tamaraw', 'Tarsier', 'Bayawak', 'Kalapati', 'Pawikan', 'Agila', 'Kalabaw', 'Baboy', 'Itik', 'Maya', 'Butiki', 'Pugita', 'Bangus', 'Tilapia', 'Dalag', 'Uwak', 'Lawin', 'Kabayo', 'Buwaya', 'Kambing']
+
+function randomGuestName() {
+  const animal = PH_ANIMALS[Math.floor(Math.random() * PH_ANIMALS.length)]
+  const num = Math.floor(1000 + Math.random() * 9000)
+  return `${animal}#${num}`
+}
+
 declare global {
   interface Window { google: any; initMap: () => void }
 }
@@ -67,6 +75,7 @@ export default function PlayPage() {
   const [roundDistances, setRoundDistances] = useState<number[]>([])
   const [user, setUser]                 = useState<any>(null)
   const [profile, setProfile]           = useState<any>(null)
+  const [guestName]                     = useState(() => randomGuestName())
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authTab, setAuthTab]           = useState<'login'|'signup'>('signup')
   const [authLoading, setAuthLoading]   = useState(false)
@@ -378,7 +387,7 @@ export default function PlayPage() {
     if (user) {
       const avgDist = newDistances.reduce((a, b) => a + b, 0) / newDistances.length
       const accuracy = Math.round(Math.max(0, (1 - avgDist / 400)) * 100)
-      saveGame(user.id, { totalScore: newTotal, roundsPlayed: round + 1, accuracy, avgDistanceKm: avgDist, mode: isFreePlay ? 'freeplay' : 'daily' })
+      saveGame(user.id, { totalScore: newTotal, roundScore: pts, roundsPlayed: round + 1, accuracy, avgDistanceKm: avgDist, mode: isFreePlay ? 'freeplay' : 'daily', isFinalRound: !isFreePlay && round + 1 >= TOTAL_ROUNDS })
         .then(async () => {
           const { data: updated } = await supabase.from('profiles').select('*').eq('id', user.id).single()
           setProfile(updated)
@@ -469,7 +478,7 @@ export default function PlayPage() {
         const avgDist = roundDistances.reduce((a, b) => a + b, 0) / Math.max(roundDistances.length, 1)
         const accuracy = Math.round(Math.max(0, (1 - avgDist / 400)) * 100)
         try {
-          await saveGame(newUser.id, { totalScore, roundsPlayed: round + 1, accuracy, avgDistanceKm: avgDist, mode: isFreePlay ? 'freeplay' : 'daily' })
+          await saveGame(newUser.id, { totalScore, roundScore: totalScore, roundsPlayed: round + 1, accuracy, avgDistanceKm: avgDist, mode: isFreePlay ? 'freeplay' : 'daily', isFinalRound: true })
           const { data: updated } = await supabase.from('profiles').select('*').eq('id', newUser.id).single()
           setProfile(updated)
         } catch {}
@@ -565,7 +574,7 @@ export default function PlayPage() {
             ))}
           </div>
           <div className="header-stat">
-            <div className="header-stat-label">{profile ? 'Total' : 'Guest'}</div>
+            <div className="header-stat-label">{profile ? profile.display_name : guestName}</div>
             <div className="header-stat-value">{profile ? (profile.total_score || 0).toLocaleString() : '—'}</div>
           </div>
           <button className="header-btn" onClick={() => router.push('/modes')} title="Back">🏠</button>
@@ -699,6 +708,19 @@ export default function PlayPage() {
                 </div>
               )}
               <div ref={resultMapRef} style={{ width: '100%', height: 160, borderRadius: 10, overflow: 'hidden', marginBottom: 16 }} />
+
+              {/* Early sign-up nudge for guests — show after round 1 */}
+              {!user && round >= 1 && (
+                <div style={{ background: 'rgba(245,197,66,0.08)', border: '1px solid rgba(245,197,66,0.25)', borderRadius: 12, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.4 }}>
+                    🏆 <strong>Sign up</strong> to save your score to the leaderboard!
+                  </div>
+                  <button onClick={() => router.push('/auth?tab=signup')} style={{ flexShrink: 0, padding: '6px 14px', background: 'var(--accent)', color: '#0f1117', border: 'none', borderRadius: 8, fontWeight: 800, fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                    Sign Up →
+                  </button>
+                </div>
+              )}
+
               <button onClick={!isFreePlay && round + 1 >= TOTAL_ROUNDS ? showFinal : nextRound} style={{ width: '100%', padding: '12px', background: 'var(--accent)', color: '#0f1117', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {!isFreePlay && round + 1 >= TOTAL_ROUNDS ? 'See Final Score →' : isFreePlay ? 'Next Bonus Round →' : 'Next Round →'}
               </button>
