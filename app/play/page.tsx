@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase, saveGame, getProfile, getTier, signUp, signIn } from '../../lib/supabase'
+import { supabase, saveGame, getProfile, signUp, signIn } from '../../lib/supabase'
 import { LOCATIONS, getDailyLocations } from '../../lib/locations'
 
 const PH_ANIMALS = ['Tamaraw', 'Tarsier', 'Bayawak', 'Kalapati', 'Pawikan', 'Agila', 'Kalabaw', 'Baboy', 'Itik', 'Maya', 'Butiki', 'Pugita', 'Bangus', 'Tilapia', 'Dalag', 'Uwak', 'Lawin', 'Kabayo', 'Buwaya', 'Kambing']
@@ -508,7 +508,7 @@ export default function PlayPage() {
   const accuracy  = roundDistances.length ? Math.round(Math.max(0, (1 - roundDistances.reduce((a,b)=>a+b,0)/roundDistances.length/400))*100) : 0
   const avgDist   = roundDistances.length ? roundDistances.reduce((a,b)=>a+b,0)/roundDistances.length : 0
   const maxScore  = (isFreePlay ? round + 1 : TOTAL_ROUNDS) * 5000
-  const tierName  = getTier(totalScore)
+  const tierName  = profile?.tier || 'Baguhan'
 
   return (
     <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }} onClick={() => bgMusicRef.current?.paused && bgMusicRef.current?.play().catch(()=>{})}>

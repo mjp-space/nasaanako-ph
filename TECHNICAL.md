@@ -260,11 +260,15 @@ Add an entry to the `LOCATIONS` array in `lib/locations.js`:
 
 Tiers are based on cumulative `total_score` across all games:
 
-| Tier | Threshold |
-|------|-----------|
-| Chill Traveler | 0 – 49,999 |
-| Lagalag | 50,000 – 99,999 |
-| Pusang Gala | 100,000+ |
+| Rank | Tier |
+|------|------|
+| #1 | Pusang Gala |
+| #2 | Lagalag |
+| #3 | Chill Traveler |
+| #4–10 | Mausisa |
+| #11+ | Baguhan |
+
+Tiers are rank-based and recalculate for ALL players after every round save.
 
 Tiers are updated in the `profiles` table after every saved game.
 

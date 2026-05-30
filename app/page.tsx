@@ -95,9 +95,12 @@ export default function Home() {
           Guess where you are. Compete with the nation.
         </p>
 
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 64 }}>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 64 }}>
           <button onClick={() => router.push('/modes')} style={{ background: 'var(--accent)', color: '#0f1117', border: 'none', padding: '18px 56px', borderRadius: 36, fontWeight: 900, fontSize: '1.3rem', cursor: 'pointer', boxShadow: '0 8px 32px rgba(245,197,66,0.35)' }}>
             ▶ Play Now — It's Free
+          </button>
+          <button onClick={() => document.getElementById('rankings')?.scrollIntoView({ behavior: 'smooth' })} style={{ background: 'transparent', color: 'var(--text)', border: '1px solid var(--border)', padding: '18px 32px', borderRadius: 36, fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>
+            🏆 See Rankings
           </button>
         </div>
 
@@ -133,7 +136,7 @@ export default function Home() {
       </section>
 
       {/* LEADERBOARD */}
-      <section style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px 80px' }}>
+      <section id="rankings" style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px 80px' }}>
         <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 3, color: 'var(--accent)', marginBottom: 12 }}>The Wanderer Tier List</div>
         <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', fontWeight: 900, marginBottom: 8, letterSpacing: '-0.5px' }}>Top Players</h2>
         <p style={{ color: 'var(--muted)', marginBottom: 40 }}>Sino ang pinaka-maalam sa Pilipinas?</p>
@@ -152,7 +155,7 @@ export default function Home() {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontWeight: 800, color: 'var(--accent2)' }}>{p.total_score?.toLocaleString()}</div>
-                <div style={{ fontSize: '0.62rem', color: 'var(--muted)' }}>{p.games_played || 0} rounds</div>
+                <div style={{ fontSize: '0.62rem', color: 'var(--muted)' }}>{p.games_played || 0} {(p.games_played || 0) === 1 ? 'game' : 'games'}</div>
               </div>
             </div>
           ))}
