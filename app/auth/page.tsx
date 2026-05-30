@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signUp, signIn } from '../../lib/supabase'
 
-export default function AuthPage() {
+function AuthContent() {
   const router = useRouter()
   const params = useSearchParams()
   const [tab, setTab] = useState<'login' | 'signup'>(params.get('tab') === 'signup' ? 'signup' : 'login')
@@ -147,5 +147,13 @@ export default function AuthPage() {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense>
+      <AuthContent />
+    </Suspense>
   )
 }
