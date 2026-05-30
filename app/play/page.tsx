@@ -10,7 +10,7 @@ declare global {
 }
 
 const TOTAL_ROUNDS = 5
-const ROUND_TIME   = 30
+const ROUND_TIME   = 60
 const PH_BOUNDS    = { minLat: 4.5, maxLat: 21.5, minLng: 116.0, maxLng: 127.5 }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -280,6 +280,11 @@ export default function PlayPage() {
       setTimeLeft(t)
       if (t <= 0) {
         if (timerRef.current) clearInterval(timerRef.current)
+        // If Street View still hasn't loaded, auto-refresh to a new location
+        if (svPanoRef.current?.getStatus() !== 'OK') {
+          refreshLocation(currentRound, usedLocs)
+          return
+        }
         setTimeLocked(true)
         if (svPanoRef.current) svPanoRef.current.setOptions({ linksControl: false, panControl: false, zoomControl: false })
       }
@@ -288,6 +293,58 @@ export default function PlayPage() {
     playFX('start')
     startMusic()
     setRound(currentRound)
+  }
+
+  function refreshLocation(currentRound: number, usedLocs: any[]) {
+    // Pick a new random location and restart the same round
+    nextLocRef.current = null
+    const available = LOCATIONS.filter(l => !usedLocs.includes(l))
+    const newLoc = available[Math.floor(Math.random() * available.length)]
+    setCurrentLoc(newLoc)
+    setSvLoading(true)
+    setGuessPlaced(false)
+    setTimeLocked(false)
+    if (guessMarkerRef.current) { guessMarkerRef.current.setMap(null); guessMarkerRef.current = null }
+    if (streetViewRef.current && window.google?.maps) {
+      const sv = new window.google.maps.StreetViewService()
+      sv.getPanorama({ location: { lat: newLoc.lat, lng: newLoc.lng }, radius: 1000 }, (data: any, status: any) => {
+        if (status === 'OK') {
+          svPanoRef.current = new window.google.maps.StreetViewPanorama(streetViewRef.current!, {
+            position: { lat: newLoc.lat, lng: newLoc.lng },
+            pov: { heading: Math.random() * 360, pitch: 0 },
+            zoom: 1,
+            addressControl: false,
+            showRoadLabels: false,
+            fullscreenControl: false,
+            motionTracking: false,
+            motionTrackingControl: false,
+          })
+          svPanoRef.current.addListener('status_changed', () => {
+            if (svPanoRef.current?.getStatus() === 'OK') setSvLoading(false)
+          })
+        } else {
+          // Try again with another location
+          refreshLocation(currentRound, [...usedLocs, newLoc])
+        }
+      })
+    }
+    // Restart timer
+    if (timerRef.current) clearInterval(timerRef.current)
+    setTimeLeft(ROUND_TIME)
+    let t = ROUND_TIME
+    timerRef.current = setInterval(() => {
+      t--
+      setTimeLeft(t)
+      if (t <= 0) {
+        if (timerRef.current) clearInterval(timerRef.current)
+        if (svPanoRef.current?.getStatus() !== 'OK') {
+          refreshLocation(currentRound, [...usedLocs, newLoc])
+          return
+        }
+        setTimeLocked(true)
+        if (svPanoRef.current) svPanoRef.current.setOptions({ linksControl: false, panControl: false, zoomControl: false })
+      }
+    }, 1000)
   }
 
   function submitGuess() {
@@ -526,21 +583,31 @@ export default function PlayPage() {
 
         {/* Loading overlay */}
         {svLoading && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 49, background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 49, background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '0 32px', textAlign: 'center' }}>
             <div style={{ fontSize: '2.5rem', animation: 'spin 1.2s linear infinite' }}>🌏</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 600 }}>Dropping you in…</div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>Finding your drop location…</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.6, maxWidth: 280 }}>
+              Please wait while we load a Street View location somewhere in the Philippines.
+              <br />If it takes too long, tap Refresh to try a different spot.
+            </div>
+            <button
+              onClick={() => refreshLocation(round, roundLocations)}
+              style={{ marginTop: 8, padding: '10px 28px', background: 'var(--accent)', border: 'none', borderRadius: 10, color: '#0f1117', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              🔄 Refresh Location
+            </button>
             <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
           </div>
         )}
 
         {/* Timer */}
-        <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 50, background: 'rgba(15,17,23,0.88)', border: `1px solid ${timeColor}`, borderRadius: 12, padding: '8px 14px', minWidth: 68, textAlign: 'center', backdropFilter: 'blur(8px)' }}>
+        {!svLoading && <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 50, background: 'rgba(15,17,23,0.88)', border: `1px solid ${timeColor}`, borderRadius: 12, padding: '8px 14px', minWidth: 68, textAlign: 'center', backdropFilter: 'blur(8px)' }}>
           <div style={{ fontSize: '0.5rem', textTransform: 'uppercase', letterSpacing: 2, color: 'var(--muted)', marginBottom: 2 }}>Time</div>
           <div style={{ fontSize: '1.3rem', fontWeight: 900, color: timeColor, lineHeight: 1 }}>{timeLeft}</div>
           <div style={{ marginTop: 5, height: 3, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${(timeLeft / ROUND_TIME) * 100}%`, background: timeColor, borderRadius: 2, transition: 'width 1s linear' }} />
           </div>
-        </div>
+        </div>}
 
         {/* Leaderboard widget */}
         {lbVisible && lbData.length > 0 && phase === 'playing' && (
