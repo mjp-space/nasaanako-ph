@@ -139,14 +139,25 @@ export default function PlayPage() {
     const t = setTimeout(() => {
 
       if (!guessMapRef.current || guessMapObjRef.current) return
+      const phBounds = new window.google.maps.LatLngBounds(
+        { lat: 4.5, lng: 116.0 },  // SW corner
+        { lat: 21.5, lng: 127.5 }  // NE corner
+      )
       const map = new window.google.maps.Map(guessMapRef.current, {
         center: { lat: 12.5, lng: 122.5 },
         zoom: 5,
+        minZoom: 5,
         mapTypeId: 'roadmap',
         disableDefaultUI: true,
         zoomControl: true,
+        restriction: {
+          latLngBounds: phBounds,
+          strictBounds: false,
+        },
         styles: [{ elementType: 'geometry', stylers: [{ color: '#1a1d27' }] }, { elementType: 'labels.text.fill', stylers: [{ color: '#6b7280' }] }, { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f1117' }] }],
       })
+      // Fit the whole Philippines on load
+      map.fitBounds(phBounds)
       guessMapObjRef.current = map
       // Force resize in case container dimensions settled after init
       window.google.maps.event.trigger(map, 'resize')

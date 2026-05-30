@@ -105,16 +105,16 @@ function AuthContent() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
               <div>
                 <label style={labelStyle}>Display Name</label>
-                <input style={inputStyle} placeholder="Mark Jude" value={displayName} onChange={e => setDisplayName(e.target.value)} maxLength={32} />
+                <input style={inputStyle} placeholder="Juan Dela Cruz" value={displayName} onChange={e => setDisplayName(e.target.value)} maxLength={32} autoComplete="off" />
               </div>
               <div>
                 <label style={labelStyle}>Username</label>
-                <input style={inputStyle} placeholder="markjude" value={username} onChange={e => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))} maxLength={20} />
+                <input style={inputStyle} placeholder="juandelacruz123" value={username} onChange={e => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))} maxLength={20} autoComplete="off" />
               </div>
             </div>
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>Password</label>
-              <input style={inputStyle} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignup()} />
+              <input style={inputStyle} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignup()} autoComplete="new-password" />
             </div>
             <button onClick={handleSignup} disabled={loading} style={{ width: '100%', padding: 13, borderRadius: 12, border: 'none', background: 'var(--accent)', color: '#0f1117', fontWeight: 800, fontSize: '1rem', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'inherit' }}>
               {loading ? 'Creating account...' : 'Create Account →'}
