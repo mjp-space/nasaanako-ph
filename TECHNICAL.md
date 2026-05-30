@@ -395,51 +395,156 @@ Set in Vercel → Project → Settings → Environment Variables:
 
 ---
 
-## Session Log — May 30, 2026
+## All Keys & Connections (DO NOT SHARE PUBLICLY)
 
-Full build session from prototype to live production. Summary of everything done:
+| Service | Key / Value |
+|---------|-------------|
+| Supabase Project ID | `aicxenaipzrzbfytdmpe` |
+| Supabase URL | `https://aicxenaipzrzbfytdmpe.supabase.co` |
+| Supabase Anon Key | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpY3hlbmFpcHpyemJmeXRkbXBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMDU4NzQsImV4cCI6MjA5NTY4MTg3NH0.Qb8-3d5wZ2fU4UbVvtnz5IWaQrL2xHtCJyndgFDOTYs` |
+| Google Maps API Key | `AIzaSyAB1ztDhvX4Ta5YT1wl6mSUBQca4SvwY4Q` |
+| GitHub Repo | `https://github.com/mjp-space/nasaanako-ph` |
+| Vercel Project | `nasaanako-ph` (mj-space-s-projects team) |
+| Vercel Dashboard | `https://vercel.com/mj-space-s-projects/nasaanako-ph` |
+| Domain Registrar | dot.ph |
+| Live URL | `https://www.nasaanako.ph` |
+| Supabase Dashboard | `https://supabase.com/dashboard/project/aicxenaipzrzbfytdmpe` |
+| Google Cloud Console | `https://console.cloud.google.com` → find the Maps API key project |
 
-### What Was Built
+### Google Maps API Key — HTTP Referrer Allowlist
+- `*.nasaanako.ph/*`
+- `nasaanako.ph/*`
+- `nasaanako-ph.vercel.app/*`
+- `http://localhost:3000/*`
+- `http://localhost:3000`
+- `localhost/*`
+
+**APIs enabled:** Maps JavaScript API, Street View API
+
+---
+
+## Database Tables (Supabase)
+
+| Table | Purpose |
+|-------|---------|
+| `profiles` | One row per user. Stores username, display_name, total_score, best_score, games_played, tier |
+| `games` | One row per game (saved after every round). Stores score, rounds_played, accuracy, avg_distance_km, mode, played_at |
+| `visitors` | Unique visitor tracking via localStorage fingerprint (id, first_seen, last_seen) |
+| `leaderboard` | VIEW — ranks profiles by total_score descending, includes games_played |
+
+All tables have RLS enabled. `visitors` allows public upsert.
+
+---
+
+## Current Live Status (End of May 30, 2026)
+
+| Item | Status |
+|------|--------|
+| Production URL | ✅ https://www.nasaanako.ph |
+| Vercel auto-deploy | ✅ Triggers on every `git push` to `main` |
+| Google Maps + Street View | ✅ Working |
+| Supabase auth | ✅ Sign up / log in / guest play |
+| Score saving | ✅ Saves after EVERY round (partial games captured) |
+| Leaderboard | ✅ Homepage top 10 + in-game top 3 widget + scrolling ticker |
+| Mobile layout | ✅ iPhone 14+ responsive, 100dvh for Safari |
+| og:image | ✅ Server-rendered via `/app/og/route.tsx` using `next/og` |
+| Visitor counter | ✅ localStorage fingerprint → `visitors` Supabase table |
+| Loading screen | ✅ Spinner + help text + Refresh button while Street View loads |
+| Timer | ✅ 60 seconds, hidden during loading, auto-refresh if still black at 0 |
+
+---
+
+## Session Log — May 30, 2026 (Full Day)
+
+### What Was Built From Scratch
 - Converted static HTML prototype → full Next.js 16 app with TypeScript + Tailwind
-- Pages: `/` (landing), `/modes` (game mode picker), `/play` (game), `/auth` (sign up/login)
-- Supabase auth, profiles, games tables, leaderboard view — all wired up
-- Google Maps JavaScript API + Street View — script injection with double-load guard
+- Pages: `/` landing, `/modes` mode picker, `/play` game, `/auth` auth
+- Supabase: profiles, games, visitors tables + leaderboard view with RLS
+- Google Maps JS API + Street View — script injection with double-load guard
 - 302 PH locations across all regions in `lib/locations.js`
 - Scoring: Haversine distance, 0–5000 pts per round, tier system
 - Sound effects: background music, pin drop, good/bad/perfect score, round start
 
-### Key Fixes Applied
-- **RefererNotAllowedMapError** — added `localhost:3000` to Google Cloud API key allowlist
-- **Maps double-load** — guard checks `document.querySelector('script[src*="maps.googleapis.com"]')` before injecting
-- **Blank/black map on mobile** — 300ms init delay + `resize` event trigger after map container paints
-- **Street View black screen** — `StreetViewService.getPanorama()` pre-checks coverage within 1km; added loading spinner + 8s timeout auto-skip fallback
-- **Score resets to 0 on sign-in** — header now shows profile `total_score` from Supabase, not session score
-- **Leaderboard showing 0-score players** — filtered out with `.gt('total_score', 0)`
-- **`useSearchParams` build error** — wrapped in `<Suspense>` in `auth/page.tsx`
-- **Vercel 404 after deploy** — Framework Preset was blank ("Other"), fixed to Next.js
+### All Bugs Fixed
 
-### Current State (as of end of session)
-- ✅ Live at `nasaanako.ph` (www.nasaanako.ph)
-- ✅ Vercel auto-deploys on `git push` to `main`
-- ✅ Supabase: profiles + games + leaderboard view with RLS
-- ✅ Auth: sign up, log in, guest play, inline auth on final screen
-- ✅ Leaderboard: homepage top 10 + in-game widget top 3 + scrolling ticker
-- ✅ Mobile: responsive layout for iPhone 14+, `100dvh` for Safari
-- ✅ 302 locations across all PH regions
-- ✅ Street View loading spinner + 8s timeout auto-skip
+| Bug | Fix |
+|-----|-----|
+| `RefererNotAllowedMapError` | Added localhost:3000 to Google Cloud API key allowlist |
+| Maps loads twice on navigation | Guard: check `document.querySelector('script[src*="maps.googleapis.com"]')` |
+| Black map on mobile | 300ms init delay + `resize` event trigger after flex container paints |
+| Street View black screen (main issue) | `StreetViewService.getPanorama()` 1km pre-check + loading spinner + 8s timeout auto-skip + Refresh button + preload on app open + preload during result screen |
+| Score shows 0 in header for logged-in users | Header shows profile `total_score` from Supabase, not session score |
+| Leaderboard shows 0-score players | Filter with `.gt('total_score', 0)` |
+| `useSearchParams` Vercel build error | Wrapped in `<Suspense>` in auth/page.tsx |
+| Vercel 404 after first deploy | Framework Preset was blank ("Other") — set to Next.js |
+| Git push failed (no remote) | Added remote origin + force pushed over old HTML prototype |
+| Auth form autofilled owner's name | `autoComplete="off"` + placeholder changed to Juan Dela Cruz / juandelacruz123 |
+| Nav buttons overlapping on mobile | `whiteSpace: nowrap` + tighter padding |
+| Guess map showed whole world | `restriction: { latLngBounds: phBounds }` + `fitBounds()` on init |
+| Two-finger map gesture on mobile | `gestureHandling: 'greedy'` |
+| Score only saved at round 5 | Now saves after every round — partial games captured |
+| og:image showed garbled text | Replaced ImageMagick PNG with server-rendered `next/og` route at `/app/og/route.tsx` |
+| Leaderboard widget always expanded | `useState(false)` — collapsed by default, toggle with 🏆 button |
+| Game UI visible during loading | All game elements hidden when `svLoading === true` |
+| Timer still ran during loading | Timer hidden until `svLoading === false` |
 
-### Pending / Next Session
-- [ ] Test Street View black screen fix on mobile with real users
-- [ ] Expand locations beyond 302 (verify Street View coverage)
-- [ ] Activate Daily Challenge mode (code ready in `getDailyLocations()`)
-- [ ] Add more game modes (Pamana, Kalikasan, Sikat — currently "Coming Soon")
-- [ ] Add `og:image` and meta tags for social sharing
-- [ ] Consider upgrading `google.maps.Marker` → `AdvancedMarkerElement` (deprecated warning)
-- [ ] Add email-based auth option (currently username-only)
-- [ ] Monitor Supabase usage and Vercel bandwidth as player base grows
+### Features Added Post-Launch
+- Mobile-responsive layout (iPhone 14+, 100dvh)
+- Loading screen: spinner + "Finding your drop location…" + Refresh button
+- Auto-refresh location if Street View doesn't load within 60s timer
+- Preload next Street View location during result screen (2 candidates)
+- Preload on app open immediately when Maps API loads
+- Score saved after every round (not just game over)
+- Inline sign-up/login on final screen (no navigation away, score preserved)
+- Visitor counter via localStorage fingerprint → Supabase `visitors` table
+- og:image via Next.js `ImageResponse` (server-rendered, fonts work properly)
+- Per-round leaderboard widget refresh after score saves
+- Timer increased 30s → 60s
+- Guess map restricted to Philippines bounds + `fitBounds()` on load
+- `getDailyLocations()` seeded function ready but not activated
 
-### How to Resume Development
-1. Open terminal → `cd ~/Documents/Claude/Projects/nasaanako-nextjs`
-2. Run `npm run dev` → open `localhost:3000`
-3. Make changes → `git add . && git commit -m "..." && git push`
-4. Vercel auto-deploys in ~2 minutes
+### Player Base at End of Session
+- **5 signed-up players**
+- **Spacemonkey** — 23,105 pts, 8 games (owner)
+- **Alipores Ni Mayor** — 4,687 pts, 2 games
+- **AntonyetaKa, Laura, Tubogcha** — 0 pts (signed up, couldn't play due to black screen)
+
+---
+
+## Pending for Next Session
+
+| Priority | Task |
+|----------|------|
+| 🔴 High | Confirm black screen fix worked for the 3 stuck players — ping them to retry |
+| 🔴 High | Push all unpushed local changes to GitHub |
+| 🟡 Medium | Activate Daily Challenge mode (`getDailyLocations()` is ready in locations.js) |
+| 🟡 Medium | Add Share Score button on final screen (generates shareable image for social) |
+| 🟡 Medium | Add more game modes (Pamana, Kalikasan, Sikat — UI exists, just needs activation) |
+| 🟡 Medium | Add forgot password flow |
+| 🟢 Low | Upgrade `google.maps.Marker` → `AdvancedMarkerElement` (deprecated, not urgent) |
+| 🟢 Low | Enable Vercel Analytics (free — just click Enable in Vercel dashboard) |
+| 🟢 Low | Add email-based auth option (currently username-only) |
+
+---
+
+## How to Resume Development
+
+```bash
+# 1. Start local dev server
+cd ~/Documents/Claude/Projects/nasaanako-nextjs
+npm run dev
+# Open localhost:3000
+
+# 2. Make changes, then deploy
+git add .
+git commit -m "your message"
+git push
+# Vercel auto-deploys in ~2 minutes
+
+# 3. Check live users/scores via Claude + Supabase MCP
+# Connect Supabase MCP in Claude, then ask:
+# "Show me all players and their scores"
+```
+
+**First message to Claude when resuming:**
+> "We're building NasaanAko.ph — a GeoGuessr-style Philippines geography game. Stack: Next.js 16, Supabase, Vercel, Google Maps API. Live at nasaanako.ph. Read TECHNICAL.md in the nasaanako-nextjs project folder for full context including all keys, current status, and what's pending."

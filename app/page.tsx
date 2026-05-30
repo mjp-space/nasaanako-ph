@@ -102,7 +102,7 @@ export default function Home() {
         </div>
 
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: 48, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
-          {[['500+', 'PH Locations'], ['81', 'Provinces'], ['Free', 'Always'], [visitorCount !== null ? visitorCount.toLocaleString() : '—', 'Visitors']].map(([val, label]) => (
+          {[['500+', 'PH Locations'], ['81', 'Provinces'], ['Free', 'Always'], [visitorCount !== null ? visitorCount.toLocaleString() : '—', 'Players']].map(([val, label]) => (
             <div key={label} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--accent)' }}>{val}</div>
               <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 1, color: 'var(--muted)' }}>{label}</div>
