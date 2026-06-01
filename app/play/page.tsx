@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, saveGame, getProfile, signUp, signIn } from '../../lib/supabase'
-import { LOCATIONS, getDailyLocations } from '../../lib/locations'
+import { LOCATIONS, TEMP_PINNED_LOCATIONS, getDailyLocations } from '../../lib/locations'
 
 const PH_ANIMALS = ['Tamaraw', 'Tarsier', 'Bayawak', 'Kalapati', 'Pawikan', 'Agila', 'Kalabaw', 'Baboy', 'Itik', 'Maya', 'Butiki', 'Pugita', 'Bangus', 'Tilapia', 'Dalag', 'Uwak', 'Lawin', 'Kabayo', 'Buwaya', 'Kambing']
 
@@ -76,6 +76,7 @@ export default function PlayPage() {
   const [user, setUser]                 = useState<any>(null)
   const [profile, setProfile]           = useState<any>(null)
   const [guestName]                     = useState(() => randomGuestName())
+  const [mapExpanded, setMapExpanded]     = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authTab, setAuthTab]           = useState<'login'|'signup'>('signup')
   const [authLoading, setAuthLoading]   = useState(false)
@@ -216,8 +217,9 @@ export default function PlayPage() {
     setTimeLocked(false)
     if (guessMarkerRef.current) { guessMarkerRef.current.setMap(null); guessMarkerRef.current = null }
 
-    // Use preloaded location if available, otherwise pick random
-    const available = LOCATIONS.filter(l => !usedLocs.includes(l))
+    // Use preloaded location if available, otherwise pick pinned first (TEMP), then random
+    const unusedPinned = TEMP_PINNED_LOCATIONS.filter(l => !usedLocs.some(u => u.lat === l.lat && u.lng === l.lng))
+    const available = unusedPinned.length > 0 ? unusedPinned : LOCATIONS.filter(l => !usedLocs.includes(l))
     const loc = (nextLocRef.current && !usedLocs.includes(nextLocRef.current))
       ? nextLocRef.current
       : available[Math.floor(Math.random() * available.length)]
@@ -522,9 +524,12 @@ export default function PlayPage() {
         .header-stat-value { font-size: 0.95rem; font-weight: 700; color: var(--accent); }
         .header-dots { display: flex; gap: 4px; align-items: center; }
         .header-btn { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; color: var(--text); cursor: pointer; font-size: 1rem; line-height: 1; }
-        .minimap-h { height: 240px; }
-        .guess-btn-bottom { bottom: 248px; }
+        .minimap-h { height: 240px; transition: height 0.25s ease; }
+        .minimap-h.expanded { height: 55vh; }
+        .guess-btn-bottom { bottom: 248px; transition: bottom 0.25s ease; }
+        .guess-btn-bottom.expanded { bottom: calc(55vh + 8px); }
         .timesup-bottom { bottom: 318px; }
+        .timesup-bottom.expanded { bottom: calc(55vh + 78px); }
         .lb-widget { position:absolute; top:12px; right:12px; z-index:60; background:rgba(15,17,23,0.92); border:1px solid var(--border); border-radius:14px; padding:10px 14px; min-width:190px; backdrop-filter:blur(10px); }
         .lb-widget-row { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); }
         .lb-widget-row:last-child { border-bottom:none; }
@@ -547,13 +552,19 @@ export default function PlayPage() {
           .header-controls { gap: 6px; }
           .header-stat-value { font-size: 0.85rem; }
           .minimap-h { height: 200px; }
+          .minimap-h.expanded { height: 55vh; }
           .guess-btn-bottom { bottom: 208px; }
+          .guess-btn-bottom.expanded { bottom: calc(55vh + 8px); }
           .timesup-bottom { bottom: 278px; }
+          .timesup-bottom.expanded { bottom: calc(55vh + 78px); }
         }
         @media (min-width: 768px) {
           .minimap-h { height: 260px; }
+          .minimap-h.expanded { height: 55vh; }
           .guess-btn-bottom { bottom: 268px; }
+          .guess-btn-bottom.expanded { bottom: calc(55vh + 8px); }
           .timesup-bottom { bottom: 338px; }
+          .timesup-bottom.expanded { bottom: calc(55vh + 78px); }
         }
       `}</style>
 
@@ -647,7 +658,7 @@ export default function PlayPage() {
 
         {/* Time up hint */}
         {timeLocked && !guessPlaced && (
-          <div className="timesup-bottom" style={{ position: 'absolute', left: 12, right: 12, zIndex: 55, background: 'rgba(15,17,23,0.92)', border: '1px solid rgba(245,197,66,0.4)', borderRadius: 12, padding: '10px 16px', textAlign: 'center', pointerEvents: 'none' }}>
+          <div className={`timesup-bottom${mapExpanded ? ' expanded' : ''}`} style={{ position: 'absolute', left: 12, right: 12, zIndex: 55, background: 'rgba(15,17,23,0.92)', border: '1px solid rgba(245,197,66,0.4)', borderRadius: 12, padding: '10px 16px', textAlign: 'center', pointerEvents: 'none' }}>
             <div style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 700 }}>⏱ Time's up!</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: 2 }}>Tap the map to drop your pin, then submit.</div>
           </div>
@@ -661,7 +672,34 @@ export default function PlayPage() {
         )}
 
         {/* Minimap + optional ticker strip */}
-        <div className="minimap-h" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderTop: '2px solid var(--border)', zIndex: 50, display:'flex', flexDirection:'column' }}>
+        <div className={`minimap-h${mapExpanded ? ' expanded' : ''}`} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderTop: '2px solid var(--border)', zIndex: 50, display:'flex', flexDirection:'column' }}>
+          {/* Expand toggle */}
+          {!svLoading && (
+            <button
+              onClick={() => {
+                setMapExpanded(e => !e)
+                setTimeout(() => window.google?.maps?.event.trigger(guessMapObjRef.current, 'resize'), 280)
+              }}
+              style={{ position:'absolute', top:8, right:8, zIndex:55, background:'rgba(15,17,23,0.85)', border:'1px solid var(--border)', borderRadius:8, width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', fontSize:'1rem', lineHeight:1, color:'var(--text)' }}
+              title={mapExpanded ? 'Shrink map' : 'Expand map'}
+            >
+              {mapExpanded ? (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 6V1h5L4.5 2.5l2 2-1.5 1.5-2-2L1.5 5.5z"/>
+                  <path d="M10 1h5v5l-1.5-1.5-2 2L10 5l2-2z"/>
+                  <path d="M6 15H1v-5l1.5 1.5 2-2L6 11l-2 2z"/>
+                  <path d="M15 10v5h-5l1.5-1.5-2-2L11 10l2 2z"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1l4 .001L3.5 2.5l2 2L4 6 2 4 .5 5.5z"/>
+                  <path d="M15 1v4l-1.5-1.5-2 2L10 4l2-2-1.5-1.5z"/>
+                  <path d="M1 15l-.001-4L2.5 12.5l2-2L6 12l-2 2 1.5 1.5z"/>
+                  <path d="M15 15h-4l1.5-1.5-2-2L12 10l2 2 1.5-1.5z"/>
+                </svg>
+              )}
+            </button>
+          )}
           {lbData.length > 0 && phase === 'playing' && (
             <div className="ticker-wrap" style={{ position:'relative', height:28, flexShrink:0 }}>
               <div className="ticker-track">
@@ -681,7 +719,7 @@ export default function PlayPage() {
 
         {/* Guess button */}
         {!svLoading && <button
-          className="guess-btn-bottom"
+          className={`guess-btn-bottom${mapExpanded ? ' expanded' : ''}`}
           onClick={guessPlaced ? submitGuess : undefined}
           disabled={!guessPlaced}
           style={{ position: 'absolute', left: 12, right: 12, padding: '13px 20px', background: 'var(--accent)', color: '#0f1117', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: '1rem', cursor: guessPlaced ? 'pointer' : 'not-allowed', opacity: guessPlaced ? 1 : 0.45, zIndex: 60, boxShadow: '0 4px 20px rgba(245,197,66,0.4)', fontFamily: 'inherit' }}
