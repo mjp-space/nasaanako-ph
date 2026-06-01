@@ -515,16 +515,34 @@ All tables have RLS enabled. `visitors` allows public upsert.
 
 ---
 
+## Session Log — June 1, 2026
+
+### Features Added
+- **Map expand/collapse toggle** — 4-corner SVG arrow button in bottom-right of minimap. Expands map to 55vh, guess button and timesup overlay slide up with it. Map fires `resize` event after animation so Google Maps redraws correctly. Toggle state: `mapExpanded` in `play/page.tsx`.
+- **Temp pinned locations (Imus, Cavite)** — 3 specific addresses always load in the first 3 rounds for testing. Defined in `TEMP_PINNED_LOCATIONS` array at the top of `lib/locations.js`. To remove: delete the `TEMP_PINNED_LOCATIONS` block in `locations.js` and the import + usage in `play/page.tsx` (both clearly marked with `// TEMP` comments).
+  - 17 Avenida Rizal, Imus, Cavite (`14.3952544, 120.9587179`)
+  - Topacio St, Imus, Cavite (`14.3952650, 120.9595260`)
+  - 192 Diokno St cor Topacio, Imus, Cavite (`14.3953848, 120.9598414`)
+
+### Planned Mode — "Loop" (concept, not built yet)
+- Player starts near their real GPS location (browser Geolocation API)
+- Follows the Pan-Philippine Highway spine: Luzon → ferry → Visayas → ferry → Mindanao
+- Checkpoints every 1km save progress to Supabase
+- After mainland complete, map shows remaining islands to island-hop
+- Needs: curated route GeoJSON, checkpoint schema in Supabase, Street View coverage pre-validation
+
+---
+
 ## Pending for Next Session
 
 | Priority | Task |
 |----------|------|
-| 🔴 High | Confirm black screen fix worked for the 3 stuck players — ping them to retry |
-| 🔴 High | Push all unpushed local changes to GitHub |
+| 🔴 High | Remove `TEMP_PINNED_LOCATIONS` from `lib/locations.js` when Imus testing is done |
 | 🟡 Medium | Activate Daily Challenge mode (`getDailyLocations()` is ready in locations.js) |
 | 🟡 Medium | Add Share Score button on final screen (generates shareable image for social) |
 | 🟡 Medium | Add more game modes (Pamana, Kalikasan, Sikat — UI exists, just needs activation) |
 | 🟡 Medium | Add forgot password flow |
+| 🟡 Medium | Build "Loop" mode — Pan-Philippine Highway journey with checkpoint saves |
 | 🟢 Low | Upgrade `google.maps.Marker` → `AdvancedMarkerElement` (deprecated, not urgent) |
 | 🟢 Low | Enable Vercel Analytics (free — just click Enable in Vercel dashboard) |
 | 🟢 Low | Add email-based auth option (currently username-only) |
