@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, saveGame, getProfile, signUp, signIn } from '../../lib/supabase'
-import { LOCATIONS, TEMP_PINNED_LOCATIONS, getDailyLocations } from '../../lib/locations'
+import { LOCATIONS, getDailyLocations } from '../../lib/locations'
 
 const PH_ANIMALS = ['Tamaraw', 'Tarsier', 'Bayawak', 'Kalapati', 'Pawikan', 'Agila', 'Kalabaw', 'Baboy', 'Itik', 'Maya', 'Butiki', 'Pugita', 'Bangus', 'Tilapia', 'Dalag', 'Uwak', 'Lawin', 'Kabayo', 'Buwaya', 'Kambing']
 
@@ -217,9 +217,8 @@ export default function PlayPage() {
     setTimeLocked(false)
     if (guessMarkerRef.current) { guessMarkerRef.current.setMap(null); guessMarkerRef.current = null }
 
-    // Use preloaded location if available, otherwise pick pinned first (TEMP), then random
-    const unusedPinned = TEMP_PINNED_LOCATIONS.filter(l => !usedLocs.some(u => u.lat === l.lat && u.lng === l.lng))
-    const available = unusedPinned.length > 0 ? unusedPinned : LOCATIONS.filter(l => !usedLocs.includes(l))
+    // Pick random location, prefer preloaded
+    const available = LOCATIONS.filter(l => !usedLocs.includes(l))
     const loc = (nextLocRef.current && !usedLocs.includes(nextLocRef.current))
       ? nextLocRef.current
       : available[Math.floor(Math.random() * available.length)]
